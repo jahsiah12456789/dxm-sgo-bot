@@ -363,11 +363,23 @@ def select_picks(candidates: List[Candidate], state: Dict[str, Any]) -> List[Can
         return []
 
     fresh = [c for c in candidates if c.dedupe_key() not in sent_keys]
-    primaries = [c for c in fresh if c.edge_percent >= MIN_EDGE_PERCENT]
+
+    # Keep only safer odds range: -150 to +300
+    filtered = []
+    for c in fresh:
+        try:
+            american_odds = int(str(c.book_odds).strip())
+        except Exception:
+            continue
+        if american_odds < -150 or american_odds > 300:
+            continue
+        filtered.append(c)
+
+    primaries = [c for c in filtered if c.edge_percent >= MIN_EDGE_PERCENT]
     selected = primaries[: min(MAX_PICKS_PER_SCAN, remaining_for_day)]
 
     if not selected and FALLBACK_ENABLED:
-        fallbacks = [c for c in fresh if c.edge_percent >= FALLBACK_MIN_EDGE_PERCENT]
+        fallbacks = [c for c in filtered if c.edge_percent >= FALLBACK_MIN_EDGE_PERCENT]
         selected = fallbacks[: min(1, remaining_for_day)]
 
     return selected
