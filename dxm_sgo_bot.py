@@ -375,7 +375,7 @@ def select_picks(candidates: List[Candidate], state: Dict[str, Any]) -> List[Can
             continue
 
         # 2) stronger edge only: 10%+
-        if c.edge_percent < 10:
+        if c.edge_percent < 12:
             continue
 
         filtered.append(c)
