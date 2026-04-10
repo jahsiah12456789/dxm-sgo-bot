@@ -262,7 +262,7 @@ class Candidate:
     sport_id: str
 
     def dedupe_key(self) -> str:
-        return f"{self.event_id}|{self.market_label}"
+        return f"{self.event_id}"
 
 def fetch_events() -> List[Dict[str, Any]]:
     starts_after = datetime.now(UTC) - timedelta(minutes=3)
