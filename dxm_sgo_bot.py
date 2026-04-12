@@ -412,12 +412,16 @@ def select_picks(candidates: List[Candidate], state: Dict[str, Any]) -> List[Can
     if len(parlay) == 2:
         combined_odds = round(parlay[0].decimal_odds * parlay[1].decimal_odds, 2)
 
-        parlay_message = (
-            "🔥 PARLAY OF THE DAY\n\n"
-            f"Leg 1: {parlay[0].market_label} @ {parlay[0].book_odds}\n"
-            f"Leg 2: {parlay[1].market_label} @ {parlay[1].book_odds}\n\n"
-            f"Combined Decimal Odds: {combined_odds}"
-        )
+    def american_to_decimal(odds):
+        odds = int(str(odds).strip())
+        if odds > 0:
+            return 1 + (odds / 100)
+        return 1 + (100 / abs(odds))
+
+    combined_odds = round(
+        american_to_decimal(parlay[0].book_odds) * american_to_decimal(parlay[1].book_odds),
+        2
+    )
 
     return selected, parlay_message
 
