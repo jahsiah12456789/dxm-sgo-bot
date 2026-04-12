@@ -407,16 +407,19 @@ def select_picks(candidates: List[Candidate], state: Dict[str, Any]) -> List[Can
         if len(parlay) == 2:
             break
 
-    # print parlay in logs (test first)
+    parlay_message = None
+
     if len(parlay) == 2:
         combined_odds = round(parlay[0].decimal_odds * parlay[1].decimal_odds, 2)
 
-        print("🔥 PARLAY OF THE DAY")
-        print(f"Leg 1: {parlay[0].label} ({parlay[0].price})")
-        print(f"Leg 2: {parlay[1].label} ({parlay[1].price})")
-        print(f"Combined Odds: {combined_odds}")
+        parlay_message = (
+            "🔥 PARLAY OF THE DAY\n\n"
+            f"Leg 1: {parlay[0].market_label} @ {parlay[0].book_odds}\n"
+            f"Leg 2: {parlay[1].market_label} @ {parlay[1].book_odds}\n\n"
+            f"Combined Decimal Odds: {combined_odds}"
+        )
 
-    return selected
+    return selected, parlay_message
 
 
 def register_sent_pick(state: Dict[str, Any], pick: Candidate) -> Dict[str, Any]:
@@ -633,7 +636,7 @@ async def run_scan_and_send(
     try:
         events = fetch_events()
         candidates = build_candidates(events)
-        picks = select_picks(candidates, state)
+        picks, parlay_message = select_picks(candidates, state)
     except Exception as exc:
         log.exception("Scan failed")
         if manual and only_chat_id is not None:
@@ -663,6 +666,17 @@ async def run_scan_and_send(
                 await context.bot.send_message(chat_id=chat_id, text=message, parse_mode=ParseMode.HTML, disable_web_page_preview=True)
             except Exception:
                 log.exception("Failed sending pick to chat %s", chat_id)
+                
+                # ===== SEND PARLAY =====
+    if parlay_message:
+        for chat_id in target_chat_ids:
+            try:
+                await context.bot.send_message(
+                    chat_id=chat_id,
+                    text=parlay_message
+                )
+            except Exception:
+                log.exception("Failed sending parlay")
 
 
 async def autoscan_job(context: ContextTypes.DEFAULT_TYPE) -> None:
