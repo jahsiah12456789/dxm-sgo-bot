@@ -392,7 +392,29 @@ def select_picks(candidates: List[Candidate], state: Dict[str, Any]) -> List[Can
     # 4) best bets first
     one_per_event.sort(key=lambda x: x.edge_percent, reverse=True)
 
-    selected = one_per_event[: min(MAX_PICKS_PER_SCAN, remaining_for_day)]
+    selected = one_per_event[: min(MAX_PICKS, len(one_per_event))]
+
+    # ===== PARLAY MODE =====
+    parlay = []
+    used_events = set()
+
+    for p in selected:
+        if p.event_id in used_events:
+            continue
+        parlay.append(p)
+        used_events.add(p.event_id)
+
+        if len(parlay) == 2:
+            break
+
+    # print parlay in logs (test first)
+    if len(parlay) == 2:
+        combined_odds = round(parlay[0].decimal_odds * parlay[1].decimal_odds, 2)
+
+        print("🔥 PARLAY OF THE DAY")
+        print(f"Leg 1: {parlay[0].label} ({parlay[0].price})")
+        print(f"Leg 2: {parlay[1].label} ({parlay[1].price})")
+        print(f"Combined Odds: {combined_odds}")
 
     return selected
 
