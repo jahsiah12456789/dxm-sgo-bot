@@ -394,36 +394,7 @@ def select_picks(candidates: List[Candidate], state: Dict[str, Any]) -> List[Can
 
     selected = one_per_event[: min(5, len(one_per_event))]
 
-    # ===== PARLAY MODE =====
-    parlay = []
-    used_events = set()
-
-    for p in selected:
-        if p.event_id in used_events:
-            continue
-        parlay.append(p)
-        used_events.add(p.event_id)
-
-        if len(parlay) == 2:
-            break
-
-    parlay_message = None
-
-    if len(parlay) == 2:
-        combined_odds = round(parlay[0].decimal_odds * parlay[1].decimal_odds, 2)
-
-    def american_to_decimal(odds):
-        odds = int(str(odds).strip())
-        if odds > 0:
-            return 1 + (odds / 100)
-        return 1 + (100 / abs(odds))
-
-    combined_odds = round(
-        american_to_decimal(parlay[0].book_odds) * american_to_decimal(parlay[1].book_odds),
-        2
-    )
-
-    return selected, parlay_message
+    return selected
 
 
 def register_sent_pick(state: Dict[str, Any], pick: Candidate) -> Dict[str, Any]:
@@ -640,7 +611,7 @@ async def run_scan_and_send(
     try:
         events = fetch_events()
         candidates = build_candidates(events)
-        picks, parlay_message = select_picks(candidates, state)
+        picks = select_picks(candidates, state)
     except Exception as exc:
         log.exception("Scan failed")
         if manual and only_chat_id is not None:
@@ -671,18 +642,7 @@ async def run_scan_and_send(
             except Exception:
                 log.exception("Failed sending pick to chat %s", chat_id)
                 
-                # ===== SEND PARLAY =====
-    if parlay_message:
-        for chat_id in target_chat_ids:
-            try:
-                await context.bot.send_message(
-                    chat_id=chat_id,
-                    text=parlay_message
-                )
-            except Exception:
-                log.exception("Failed sending parlay")
-
-
+            
 async def autoscan_job(context: ContextTypes.DEFAULT_TYPE) -> None:
     await run_scan_and_send(context)
 
