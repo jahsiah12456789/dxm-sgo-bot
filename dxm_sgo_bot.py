@@ -392,7 +392,7 @@ def select_picks(candidates: List[Candidate], state: Dict[str, Any]) -> List[Can
     # 4) best bets first
     one_per_event.sort(key=lambda x: x.edge_percent, reverse=True)
 
-    selected = one_per_event[: min(MAX_PICKS, len(one_per_event))]
+    selected = one_per_event[: min(5, len(one_per_event))]
 
     # ===== PARLAY MODE =====
     parlay = []
